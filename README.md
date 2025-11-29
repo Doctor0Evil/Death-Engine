@@ -9,66 +9,112 @@
 
 <img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
 
-Welcome to the official source for the Augmented-Logic Network (ALN) programming language: an advanced, modular, and rigorously schema-driven domain-specific language crafted for high-integrity biosignal workflow management in Brain-Computer Interface platforms, cybernetic systems, nanotechnology, and pioneering Smart City infrastructures.
+About
+The "Death Engine" is a next-generation game-engine evolved into an augmented-user engine. Built, and designed for next-generation gaming and hardware: The Death Engine never fails to deliver death! The shocking visuals and eerie audio for horror game fanatics, or any individual who has the courage to face their fears, is absolutely to die for!ALN-Syntax.json​
+Overview
+Death Engine is an ALN-powered, programming-blockchain driven, augmented-user engine that fuses retro shooter ingenuity with neuromorphic, smart-city, and BCI-era infrastructure. Inspired by the Hexen and Doom engine lineage, then extended with ALN Quantum Compliance Core concepts, it treats every asset, interaction, and neuro-signal as an auditable, blockchain-anchored event in a living horror simulation.ALN-Syntax.json​
+Design DNA: From Hexen to Augmented-User
+Death Engine inherits the spirit of the Hexen engine’s hub-based, class-driven, scriptable worlds and rebuilds them for persistent, multi-node augmented environments. Its core loop is modeled on non-linear hubs, ACS-like scripting, and destructible, inventory-rich worlds, but re-targeted to ALN-native data flows, smart-city regions, and BCI endpoints.ALN-Syntax.json​
+Engine LineageKey TraitsHow Death Engine Evolves It
+Doom / id Tech 1
+2.5D, fast FPS, WAD-driven content ALN-Syntax.json​
+Retains low-latency combat loop with ALN-typed assets and quantum-audited builds. ALN-Syntax.json​
+Hexen Engine
+Hub maps, ACS scripting, classes, inventory ALN-Syntax.json​
+Upgrades hubs to city-scale zones, ACS to ALN policy-code, and classes to augmented-user profiles. ALN-Syntax.json​
+Unreal (early)
+True 3D, strong editor, licensing focus
+Emulates tool-first philosophy with ALN modules, blockchain provenance, and BCI-friendly editors. ALN-Syntax.json​
+ALN Programming-Blockchain Core
+At the heart of Death Engine is an ALN programming-blockchain fabric that treats the engine as a policy-native, cryptographically anchored simulation space. Every map, monster, BCI signal, and smart-city sensor packet is expressed as ALN-typed assets with quantum-resilient identifiers, DID-signed provenance, and immutable audit trails.ALN-Syntax.json​
+Core properties:
+Ephemeral, auditable assets: Levels, textures, NPC behaviors, and BCI bindings are generated or validated via ALN GENERATEASSETINLINE-style modules, anchored on-chain and destroyed at session end when configured.ALN-Syntax.json​
+Dynamic dependency and mod loading: Engine plugins and mods are synthesized and resolved at runtime using ALN-like DYNAMICDEPENDENCYRESOLVE logic, nullifying traditional supply-chain risk for gameplay-critical code.ALN-Syntax.json​
+Quantum-secure identity and ownership: Players, creators, and AI agents are represented through DID-based identities, with asset authorship notarized via blockchain-anchored IP receipts and compliance metadata.ALN-Syntax.json​
+Hexen-Inspired Worlds, Reimagined
+Death Engine takes Hexen’s structural innovations and projects them into an augmented, mixed-reality future.ALN-Syntax.json​
+Key inheritances and evolutions:
+Hub System → City-Scale Horror Meshes:
+Hexen’s hubs connected multiple levels into puzzle-rich clusters; Death Engine extends this into smart-city “death meshes,” where each district is a node in a living hub graph driven by real sensor and BCI state.ALN-Syntax.json​
+ACS Scripting → ALN Policy-Code:
+ACS’s map scripts become ALN policy blocks that respond to biosignals, environmental feeds, and blockchain events, enabling puzzles and encounters that react to actual cognitive load, time, weather, and network-wide anomalies.ALN-Syntax.json​
+Classes and Inventory → Augmented Profiles:
+Fighter, Cleric, and Mage evolve into configurable augmented-user archetypes whose capabilities are bound to ALN-typed capabilities, neuro-permissions, and hardware-attested devices.ALN-Syntax.json​
+Augmented-User and BCI Integration
+Death Engine is designed as an “augmented-user engine” that can orchestrate horror experiences across EEG headsets, neuromorphic co-processors, and city infrastructure while preserving safety and compliance.ALN-Syntax.json​
+BCI and hardware features:
+BCI-feedback difficulty and pacing: EEG and biosignal streams inform adaptive AI, dynamically modulating enemy aggression, puzzle pressure, and audio-visual intensity to keep players in a target arousal band.ALN-Syntax.json​
+Neuromorphic edge nodes: Integrations with Loihi2-class or similar neuromorphic accelerators enable ultra-low-power, event-driven processing for persistent AR horror overlays in public or controlled environments.ALN-Syntax.json​
+OTA-secured devices: All BCI and sensor devices participating in a Death Engine deployment must support quantum-resistant OTA firmware updates and hardware-rooted trust anchors, enforced through ALN Quantum Compliance Core policies.ALN-Syntax.json​
+Smart-City, AR, and Real-World Hubs
+Death Engine elevates Hexen’s topology into real-world augmented environments, turning city districts into horror-enabled hubs mapped directly onto physical infrastructure.ALN-Syntax.json​
+Applications:
+Smart-city overlays: Monuments, transport hubs, and designated “fear zones” become map hubs where in-game events are triggered by real-time environmental sensor thresholds, citizen participation, or scheduled events.ALN-Syntax.json​
+AR doom-hubs: AR clients interpret ALN hub definitions to spawn visual and audio hallucinations anchored to GPS, beacons, or spatial anchors, respecting zoning, consent, and safety constraints.ALN-Syntax.json​
+Safety envelopes and consent: All augmented experiences are wrapped in ALN-governed consent, opt-out, and safety policies designed for medical, public-sector, and consumer deployments.ALN-Syntax.json​
+Quantum Compliance and Forensic Horror
+Borrowing from the ALN Assurance Protocol, Death Engine internalizes compliance and security as game-engine primitives.ALN-Syntax.json​
+Built-in assurances:
+Immutable horror logs: Every critical game event—spawn, kill, neuro-trigger, asset load—is logged as a DID-signed, blockchain-anchored record suitable for tournament adjudication, research audits, or regulated deployments.ALN-Syntax.json​
+Quantum-resilient cryptography: Engine secrets, signing keys, and firmware updates employ hybrid post-quantum cryptography and TPM-backed roots of trust, providing future-proof resilience in long-lived deployments.ALN-Syntax.json​
+Compliance scores and policies: Deployments can compute and attest to concrete HIPAA/GDPR-style compliance scores for sessions and environments, making Death Engine viable for serious games and neuro-research scenarios.ALN-Syntax.json​
+Modding, Source Lineage, and Community
+Death Engine respects the heritage of Doom, Heretic, and Hexen while embracing modern open development through ALN-governed workflows.ALN-Syntax.json​
+Community pillars:
+Source-aware lineage: The engine acknowledges Hexen’s open-sourced engine heritage and the vibrant modding culture around ZDoom, GZDoom, and Doomsday, using compatible data-import paths where legally and technically appropriate.ALN-Syntax.json​
+ALN-native mods: Mods are authored as ALN modules that declare assets, logic, and compliance intent, enabling safe hot-load, sandboxed execution, and forensic rollback on misbehavior.ALN-Syntax.json​
+Federated governance: Community-curated registries of Death Engine mods, maps, and AR hubs are governed by on-chain voting, reputation, and transparent policy audits, ensuring long-term ecosystem health.ALN-Syntax.json​
+Getting Started
+Death Engine is intended for advanced users, researchers, and studios building ALN-native augmented horror experiences across desktop, AR, and BCI-enabled environments.ALN-Syntax.json​
+High-level steps:
+Deploy ALN Core: Set up the ALN Quantum Compliance Core and blockchain backends as described in the ALN Assurance Protocol and syntax guides.ALN-Syntax.json​
+Configure Nodes and Devices: Register compute nodes, EEG/BCI hardware, and smart-city sensors as ALN assets with hardware attestation and OTA policies enforced.ALN-Syntax.json​
+Author Hubs and Scenarios: Define hubs, puzzles, neuro-triggers, and AR overlays using ALN policy-code and Death Engine’s content pipeline.ALN-Syntax.json​
+Launch and Observe: Run sessions with real-time compliance, security, and neuro-telemetry dashboards for both horror impact and safety verification.ALN-Syntax.json​
 
-***
-
-## Overview of ALN
-
-ALN is engineered as a robust, secure foundation for augmented-user research, BCI operations, and distributed urban neurotech frameworks by incorporating:
-
-- **Machine-Interpretable Strict Typing:** Each data field and neural signal is rigorously defined with precise, schema-enforced types (e.g., float32 for neural data streams, semantically tagged strings for metadata), ensuring runtime validation and eliminating vulnerabilities from third-party dependencies.
-
-- **Extensible Modular Framework:** ALN utilizes versioned blocks such as `[header]`, `[channels]`, `[sampling]`, `[data]`, and `[footer]` to contain biosignal data and metadata, supporting evolution to future sensor types like quantum sensors and optogenetics while maintaining backward compatibility.
-
-- **Zero-Trust Security Architecture:** The language ecosystem enforces ephemeral, dynamic credentials integrated with enterprise identity providers (Microsoft Entra ID, GitHub), AI-supervised encrypted development tunnels, microsegmentation, and immutable cryptographic audit trails to safeguard proprietary data and mitigate supply chain risks.
-
-- **Adaptive Schema Reflexivity Engine (ASRE):** A cryptographic proof mechanism that ensures every schema modification is formally verified for governance exclusivity, regulatory adherence, and long-term stability.
-
-- **Interoperability Bridges:** Native mappings to global data standards including BIDS-EEG, XDF/LSL for biosignal streaming, and FHIR for clinical interoperability, enabling seamless ecosystem integration.
-
-- **Embedded AI Validation:** Runtime enforcement of data integrity and policy adherence within containerized, signed modules, reducing risks from compromised external libraries and dependencies.
-
-***
-
-## Core Features
-
-- **Cryptographic Integrity & Immutable Auditing:** All schema versions and updates are cryptographically signed and locked under ASRE authority.
-
-- **Federated Device Authenticity & Tokenized Data Flows:** Supports secure, multi-modal IoT and AI-enabled wearable devices with blockchain-backed compliance tokens.
-
-- **Hot-Swappable Container Modules:** Ensures resilient and compliant operation for smart-city and BCI infrastructure with seamless fallbacks.
-
-- **Minimal External Dependence:** Self-contained core validation reduces reliance on mutable third-party APIs and libraries.
-
-- **Comprehensive Metadata Capture:** Detailed sensor and data attributes promote reproducibility and advanced multimodal analytics.
-
-***
-
-## Strategic Significance
-
-ALN underlies the integration of neurotechnology with Smart Cities, augmented users, BCI devices, cybernetics, and nanotech research systems. By internalizing all parsing, validation, and policy enforcement, ALN dramatically reduces operational disruptions from external dependency issues, ensuring continuity and regulatory certainty.
-
-***
-
-## Security and Compliance
-
-ALN meets and exceeds strict regulatory frameworks including GDPR, HIPAA, NIST CSF, and PCI-DSS. It provides audit-ready data integrity and continuous policy enforcement through cryptographically secured modules and immutable update chains managed by ASRE governance.
-
-***
-
-## Engagement and Contributions
-
-This repository invites contributions, issue reporting, and collaboration to evolve ALN as the sovereign global standard for AI-native biosignal languages powering next-generation neurotechnologies.
-
-***
-
-## Documentation and Resources
-
-- [Architecting ALN: The Definitive Blueprint](https://github.com/Doctor0Evil/ALN/blob/main/docs/ALN-Programming-Language%3A%20The%20language%20of%20the%20future.md)
-
-***
-
-For specific inquiries or requests for ALN module templates adapted to your hardware or smart city applications, please open an issue or contact the maintainers directly.
-
-***
+death-engine/
+├─ README.md
+├─ docs/
+│  ├─ architecture/
+│  ├─ aln/
+│  ├─ bci/
+│  └─ horror-design/
+├─ engine/               # Core runtime
+│  ├─ core/              # ECS, events, serialization
+│  ├─ rendering/         # DX12/Vulkan backends, post-FX
+│  ├─ audio/             # Spatial/binaural audio, DSP
+│  ├─ physics/           # Integration, destructibles, ragdoll
+│  └─ scripting/         # Runtime scripting bridge
+├─ gameplay/             # Horror and hub logic
+│  ├─ horror_director/   # Global fear orchestrator
+│  ├─ ai/                # Behaviors, nav
+│  ├─ hub_system/        # Hexen-style hubs, puzzles
+│  ├─ inventory_classes/ # Augmented-user “classes”
+│  └─ interaction/
+├─ aln_chain/            # ALN + blockchain layer
+│  ├─ schemas/
+│  ├─ validators/
+│  ├─ tx_builders/
+│  └─ compliance/
+├─ bci/                  # BCI & bio-signal stack
+│  ├─ drivers/
+│  ├─ acquisition/
+│  ├─ preprocessing/
+│  ├─ feature_extraction/
+│  └─ mapping/
+├─ tools/                # Editors and CLIs
+│  ├─ editor/            # World/editor UI
+│  ├─ hub_editor/
+│  ├─ aln_inspector/     # ALN manifest inspector
+│  └─ bci_calibration/
+├─ deploy/               # DevOps, infra
+│  ├─ docker/
+│  ├─ k8s/
+│  ├─ azure/
+│  │  └─ edge_mini_r/    # Azure Stack Edge Mini R
+│  └─ ci_cd/
+├─ samples/
+│  ├─ demo_hub/
+│  └─ demo_bci/
+└─ .github/
+   └─ workflows/
