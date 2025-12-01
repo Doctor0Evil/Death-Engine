@@ -1,0 +1,76 @@
+name: NightWhispers Engine + Unity CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  RUST_VERSION: stable
+
+jobs:
+  build-engine-core:
+    name: Build engine_core (Rust/ALN)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Build engine_core via ALN CI script
+        run: |
+          .github/scripts/ci_build_engine.aln
+        shell: bash
+
+      - name: Upload engine_core artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-core-${{ matrix.os }}
+          path: ci_artifacts/**
+
+  unity-editor-tests:
+    name: Unity Editor bridge validation
+    runs-on: windows-latest
+    needs: build-engine-core
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows engine_core
+        uses: actions/download-artifact@v4
+        with:
+          name: engine-core-windows-latest
+          path: ci_engine_core
+
+      - name: Stage engine_core into Unity Plugins
+        run: |
+          mkdir -p Assets/Plugins/Windows/x86_64
+          copy ci_engine_core\\Windows\\x86_64\\engine_core.dll Assets\\Plugins\\Windows\\x86_64\\engine_core.dll
+        shell: pwsh
+
+      - name: Run Unity Editor tests (NightWhispers bridge)
+        uses: RageAgainstThePixel/unity-action@v1
+        with:
+          editor-path: 'C:\\Program Files\\Unity\\Editor\\Unity.exe'
+          project-path: '.'
+          log-name: 'nightwhispers-editor-tests'
+          build-target: 'StandaloneWindows64'
+          args: >
+            -batchmode
+            -nographics
+            -runEditorTests
+            -editorTestsResultFile ./artifacts/editor-tests.xml
+            -quit
