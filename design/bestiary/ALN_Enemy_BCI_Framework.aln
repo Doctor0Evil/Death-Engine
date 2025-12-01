@@ -1,0 +1,442 @@
+;======================================================================
+; ALN ENEMY BLUEPRINT FRAMEWORK
+; Production-ready templates for:
+;  - Enemy Stats
+;  - AI Logic / Behavior Trees
+;  - Debug Trace Logging
+; Target: Neuromorphic / BCI / EEG-aware survival horror platform
+;======================================================================
+
+ALNBEGIN module EnemyBCIFramework
+  version           1.0.0
+  engine_target     "Unreal_5_UEFN; Unity_600; Godot_4"
+  platform_target   "PC; Console; BCI-EEG; Neuromorphic"
+  compliance_profile "ALN.GOV.QSAFE.BCI"
+ALNEND
+
+
+;======================================================================
+; 1. ENEMY SCHEMA TEMPLATE
+; - Canonical definition for any enemy archetype
+;======================================================================
+
+ALNBEGIN schema EnemyArchetype
+  field Id                string          ; Unique, stable ID (no spaces)
+  field Name              string
+  field Type              enum("Creeper","Beast","Revenant","Construct","Aberration","Boss")
+  field Tier              enum("Trash","Elite","MiniBoss","Boss","Elder")
+  field BiomeTags         string[]        ; e.g. ["Swamp","Village","NightOnly"]
+  field SpawnRegions      string[]        ; level/volume IDs
+  field TimeOfDayMask     enum("Any","NightOnly","DuskDawn","Custom")
+  field DangerRating      int             ; 1–10
+  field ThreatVectorMask  string[]        ; e.g. ["Melee","Ranged","Psych","Status","Stealth"]
+  field LootTableId       string          ; FK to LootTable schema
+  field QuestTags         string[]        ; ["Main","Side","WorldEvent"]
+  field BCIProfileId      string          ; FK to BCIResponseProfile
+  field EEGHazardScore    float           ; 0.0–1.0 bounded
+  field ComplianceTag     string          ; e.g. "DO_NO_HARM_SIM_SANDBOX"
+ALNEND
+
+
+;======================================================================
+; 2. CORE STATS TEMPLATE
+; - Engine-facing combat / survival stats
+;======================================================================
+
+ALNBEGIN schema EnemyStats
+  field EnemyId           string
+  field Level             int
+  field MaxHealth         float
+  field HealthRegenPerSec float
+  field StaminaMax        float
+  field StaminaRegenPerSec float
+  field MoveSpeedWalk     float
+  field MoveSpeedSprint   float
+  field TurnRate          float
+  field ArmorValue        float
+  field BleedResist       float  ; 0–1
+  field FearResist        float  ; 0–1
+  field HallucResist      float  ; 0–1
+  field PoisonResist      float  ; 0–1
+  field DamageMeleeMin    float
+  field DamageMeleeMax    float
+  field DamageRangedMin   float
+  field DamageRangedMax   float
+  field CritChance        float  ; 0–1
+  field CritMultiplier    float
+  field StatusSlotsMax    int
+  field RespawnDelaySec   float
+ALNEND
+
+
+;======================================================================
+; 3. SENSORY / PERCEPTION TEMPLATE
+; - Vision, hearing, scent, neuromorphic hooks
+;======================================================================
+
+ALNBEGIN schema EnemyPerception
+  field EnemyId           string
+  field VisionRange       float
+  field VisionFOVDegrees  float
+  field VisionNightBoost  float   ; multiplier at night
+  field HearingRadius     float
+  field ScentRadius       float
+  field AlertDecayPerSec  float
+  field InvestigateTimeoutSec float
+  field PlayerNoiseWeight float   ; scales reaction to player-generated noise
+  field BCIStressAffinity float   ; how much this enemy reacts to stress
+ALNEND
+
+
+;======================================================================
+; 4. ABILITIES TEMPLATE
+; - Individual actions with param hooks for engine anim & VFX
+;======================================================================
+
+ALNBEGIN schema EnemyAbility
+  field AbilityId         string
+  field EnemyId           string
+  field Name              string
+  field Category          enum("Melee","Ranged","Psych","Status","Movement","Summon","Phase")
+  field CooldownSec       float
+  field WindupSec         float
+  field RecoverySec       float
+  field RangeMin          float
+  field RangeMax          float
+  field DamageFlat        float
+  field DamagePercentHP   float   ; % of target max health
+  field AppliesStatusIds  string[]
+  field CostStamina       float
+  field AIWeight          float   ; base decision weight
+  field AnimTag           string  ; engine animation ID
+  field SFXTag            string  ; sound ID
+  field VFXTag            string  ; visual effect ID
+  field BCIEventOnCast    string  ; FK to BCIEvent template
+  field BCIEventOnHit     string
+ALNEND
+
+
+;======================================================================
+; 5. STATUS EFFECTS TEMPLATE
+; - Bleed, fear, hallucination, etc.
+;======================================================================
+
+ALNBEGIN schema StatusEffect
+  field StatusId          string
+  field Name              string
+  field Category          enum("Bleed","Fear","Hallucination","Poison","Slow","Stun","Custom")
+  field DurationSec       float
+  field TickIntervalSec   float
+  field TickDamage        float
+  field MoveSpeedMult     float
+  field VisionDistortAmp  float   ; for post-processing
+  field AudioDistortAmp   float
+  field Stackable         bool
+  field MaxStacks         int
+  field BCIStressDelta    float   ; + raises stress, - calms
+  field ComplianceCap     float   ; upper bound for amplitude in BCI medium
+ALNEND
+
+
+;======================================================================
+; 6. BCI / EEG RESPONSE PROFILE
+; - How the enemy “talks” to the BCI layer in a safe, capped manner
+;======================================================================
+
+ALNBEGIN schema BCIResponseProfile
+  field BCIProfileId          string
+  field Name                  string
+  field MaxPulsePerMinute     int      ; safety limiter
+  field MaxIntensity          float    ; 0–1 global cap
+  field PreferredChannels     string[] ; engine-defined EEG feedback channels
+  field StressCurveId         string   ; FK to curve asset
+  field CalmCurveId           string
+  field HallucinationCurveId  string
+  field SafetyClampProfileId  string   ; regulatory profile
+ALNEND
+
+
+ALNBEGIN schema BCIEvent
+  field BCIEventId        string
+  field Category          enum("JumpScare","TensionRise","TensionDrop","Hallucination","Reward")
+  field IntensityBase     float
+  field IntensityRandom   float
+  field DurationMs        int
+  field CooldownMs        int
+  field CurveId           string
+  field SafetyClampTag    string
+ALNEND
+
+
+;======================================================================
+; 7. AI LOGIC TEMPLATE (STATE MACHINE + BT NODES)
+;======================================================================
+
+ALNBEGIN schema EnemyAIStateMachine
+  field EnemyId           string
+  field DefaultStateId    string
+  field States            EnemyAIState[]
+ALNEND
+
+ALNBEGIN schema EnemyAIState
+  field StateId           string          ; e.g. "Idle","Patrol","Hunt","Frenzy"
+  field BehaviorTreeId    string          ; FK to EnemyBehaviorTree
+  field CanTransitionTo   string[]        ; allowed next state IDs
+ALNEND
+
+
+ALNBEGIN schema EnemyBehaviorTree
+  field BehaviorTreeId    string
+  field RootNodeId        string
+  field Nodes             BehaviorNode[]
+ALNEND
+
+ALNBEGIN schema BehaviorNode
+  field NodeId            string
+  field NodeType          enum("Selector","Sequence","Parallel","Condition","Action","Decorator")
+  field Children          string[]
+  field ConditionId       string      ; for NodeType=Condition
+  field ActionId          string      ; for NodeType=Action
+  field DecoratorId       string      ; for NodeType=Decorator
+ALNEND
+
+
+; CONDITIONS
+ALNBEGIN schema AICondition
+  field ConditionId       string
+  field Description       string
+  field ParamFloat        float[]
+  field ParamInt          int[]
+  field ParamString       string[]
+ALNEND
+
+; ACTIONS
+ALNBEGIN schema AIAction
+  field ActionId          string
+  field Description       string
+  field AbilityId         string        ; link to EnemyAbility
+  field MoveTargetMode    enum("None","ToPlayer","AwayFromPlayer","ToCover","ToWaypoint")
+  field MoveSpeedMode     enum("Walk","Sprint","Crawl","Custom")
+  field PlayAnimTag       string
+  field EmitDebugEvent    bool
+  field DebugEventTag     string
+ALNEND
+
+; DECORATORS EXAMPLE (BCI-AWARE)
+ALNBEGIN schema AIDecorator
+  field DecoratorId       string
+  field Description       string
+  field Type              enum("BCI_Clamp_On_Stress","Cooldown","Once","Probability")
+  field FloatArgs         float[]
+  field IntArgs           int[]
+  field StringArgs        string[]
+ALNEND
+
+
+;======================================================================
+; 8. DEBUG TRACE LOGGING TEMPLATE
+; - Engine-agnostic structured logs for replay / QA / telemetry
+;======================================================================
+
+ALNBEGIN schema EnemyDebugEvent
+  field EventId           string        ; globally unique
+  field TimestampUtc      string        ; ISO8601
+  field EnemyId           string
+  field EnemyInstanceId   string
+  field PlayerId          string
+  field LevelName         string
+  field Location          float[3]
+  field Category          enum("Spawn","Despawn","StateChange","AbilityCast",
+                               "AbilityHit","DamageDealt","DamageTaken",
+                               "StatusApplied","StatusExpired",
+                               "Perception","BCIEvent","Error")
+  field PayloadJson       string        ; arbitrary structured JSON
+ALNEND
+
+
+; Example formatted log macros
+ALNBEGIN macro LOG_ENEMY_SPAWN
+  args(EnemyId, EnemyInstanceId, LevelName, X, Y, Z)
+  emit EnemyDebugEvent {
+    EventId         = uuid()
+    TimestampUtc    = now_utc()
+    EnemyId         = $EnemyId
+    EnemyInstanceId = $EnemyInstanceId
+    PlayerId        = ""
+    LevelName       = $LevelName
+    Location        = [$X,$Y,$Z]
+    Category        = "Spawn"
+    PayloadJson     = json({
+                         "AIState":"Idle",
+                         "HealthInit":"from_stats_table",
+                         "BCIProfileAttached": true
+                       })
+  }
+ALNEND
+
+
+ALNBEGIN macro LOG_AI_STATE_CHANGE
+  args(EnemyId, EnemyInstanceId, PrevStateId, NewStateId, Reason)
+  emit EnemyDebugEvent {
+    EventId         = uuid()
+    TimestampUtc    = now_utc()
+    EnemyId         = $EnemyId
+    EnemyInstanceId = $EnemyInstanceId
+    PlayerId        = ""
+    LevelName       = current_level()
+    Location        = current_enemy_location($EnemyInstanceId)
+    Category        = "StateChange"
+    PayloadJson     = json({
+                         "PrevState":$PrevStateId,
+                         "NewState":$NewStateId,
+                         "Reason":$Reason
+                       })
+  }
+ALNEND
+
+
+ALNBEGIN macro LOG_ABILITY_CAST
+  args(EnemyId, EnemyInstanceId, PlayerId, AbilityId, Result, Damage)
+  emit EnemyDebugEvent {
+    EventId         = uuid()
+    TimestampUtc    = now_utc()
+    EnemyId         = $EnemyId
+    EnemyInstanceId = $EnemyInstanceId
+    PlayerId        = $PlayerId
+    LevelName       = current_level()
+    Location        = current_enemy_location($EnemyInstanceId)
+    Category        = "AbilityCast"
+    PayloadJson     = json({
+                         "AbilityId":$AbilityId,
+                         "Result":$Result,
+                         "Damage":$Damage
+                       })
+  }
+ALNEND
+
+
+ALNBEGIN macro LOG_BCI_EVENT
+  args(EnemyId, EnemyInstanceId, PlayerId, BCIEventId, Intensity, Channel, Reason)
+  emit EnemyDebugEvent {
+    EventId         = uuid()
+    TimestampUtc    = now_utc()
+    EnemyId         = $EnemyId
+    EnemyInstanceId = $EnemyInstanceId
+    PlayerId        = $PlayerId
+    LevelName       = current_level()
+    Location        = current_enemy_location($EnemyInstanceId)
+    Category        = "BCIEvent"
+    PayloadJson     = json({
+                         "BCIEventId":$BCIEventId,
+                         "Intensity":$Intensity,
+                         "Channel":$Channel,
+                         "Reason":$Reason
+                       })
+  }
+ALNEND
+
+
+;======================================================================
+; 9. SAMPLE FILLED ENEMY RECORD (TEMPLATE USE)
+;======================================================================
+
+ALNBEGIN enemy "HOLLOW_ORCHARD_BEAST_V1"
+  EnemyArchetype {
+    Id              = "HOLLOW_ORCHARD_BEAST_V1"
+    Name            = "Hollow-Beast of the Orchard"
+    Type            = "Aberration"
+    Tier            = "MiniBoss"
+    BiomeTags       = ["Orchard","Blight","NightOnly"]
+    SpawnRegions    = ["Map_Orchard_01","Map_Orchard_GraveRow"]
+    TimeOfDayMask   = "NightOnly"
+    DangerRating    = 8
+    ThreatVectorMask = ["Melee","Area","Psych","Status","Stealth"]
+    LootTableId     = "LOOT_ORCHARD_BEAST"
+    QuestTags       = ["Side","Alchemy","LocalLegend"]
+    BCIProfileId    = "BCI_PROFILE_ORCHARD_FEAR"
+    EEGHazardScore  = 0.72
+    ComplianceTag   = "DO_NO_HARM_SIM_SANDBOX"
+  }
+
+  EnemyStats {
+    EnemyId             = "HOLLOW_ORCHARD_BEAST_V1"
+    Level               = 12
+    MaxHealth           = 1850.0
+    HealthRegenPerSec   = 0.0
+    StaminaMax          = 240.0
+    StaminaRegenPerSec  = 12.0
+    MoveSpeedWalk       = 250.0
+    MoveSpeedSprint     = 520.0
+    TurnRate            = 140.0
+    ArmorValue          = 18.0
+    BleedResist         = 0.35
+    FearResist          = 0.10
+    HallucResist        = 0.25
+    PoisonResist        = 0.60
+    DamageMeleeMin      = 55.0
+    DamageMeleeMax      = 85.0
+    DamageRangedMin     = 0.0
+    DamageRangedMax     = 0.0
+    CritChance          = 0.12
+    CritMultiplier      = 1.8
+    StatusSlotsMax      = 3
+    RespawnDelaySec     = 0.0
+  }
+
+  EnemyPerception {
+    EnemyId             = "HOLLOW_ORCHARD_BEAST_V1"
+    VisionRange         = 28.0
+    VisionFOVDegrees    = 110.0
+    VisionNightBoost    = 1.4
+    HearingRadius       = 40.0
+    ScentRadius         = 22.0
+    AlertDecayPerSec    = 4.0
+    InvestigateTimeoutSec = 9.0
+    PlayerNoiseWeight   = 1.3
+    BCIStressAffinity   = 0.8
+  }
+
+  ; Key ability: Impaling Charge
+  EnemyAbility {
+    AbilityId           = "ORCHARD_CHARGE_IMPALE"
+    EnemyId             = "HOLLOW_ORCHARD_BEAST_V1"
+    Name                = "Impaling Orchard Charge"
+    Category            = "Melee"
+    CooldownSec         = 11.0
+    WindupSec           = 1.4
+    RecoverySec         = 0.9
+    RangeMin            = 3.0
+    RangeMax            = 18.0
+    DamageFlat          = 95.0
+    DamagePercentHP     = 0.08
+    AppliesStatusIds    = ["STATUS_BLEED_MED"]
+    CostStamina         = 65.0
+    AIWeight            = 0.8
+    AnimTag             = "ANIM_ORCHARD_CHARGE"
+    SFXTag              = "SFX_ORCHARD_ANTLER_RUSH"
+    VFXTag              = "VFX_DUST_TRAIL"
+    BCIEventOnCast      = "BCI_EVT_TENSION_SPIKE_SHORT"
+    BCIEventOnHit       = "BCI_EVT_JUMPSCARE_MED"
+  }
+ALNEND
+
+
+;======================================================================
+; 10. ENGINE INTEGRATION NOTES (BCI SAFETY)
+;======================================================================
+
+ALNBEGIN notes EngineIntegration
+  text """
+  - All BCIEvent and BCIResponseProfile instances must be validated
+    against platform safety caps before deployment.
+  - EnemyAIStateMachine and BehaviorTree bindings are resolved at
+    content-cook time, with static checks:
+      * No orphan NodeId, ConditionId, ActionId, DecoratorId
+      * No infinite loops without watchdog decorators
+  - EnemyDebugEvent is serialized as line-delimited JSON for log
+    replay, telemetry, and compliance auditing.
+  - EEGHazardScore and BCIStressAffinity are used by a global
+    BCI governor module to clamp or disable events based on
+    per-player comfort settings and regional regulations.
+  """
+ALNEND
