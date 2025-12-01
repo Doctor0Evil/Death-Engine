@@ -1,0 +1,133 @@
+name: Build engine_core + Unity native plugins
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "engine_core/**"
+      - "UnityProject/**"
+      - ".github/workflows/build-engine-core.yml"
+  pull_request:
+    paths:
+      - "engine_core/**"
+      - "UnityProject/**"
+      - ".github/workflows/build-engine-core.yml"
+
+jobs:
+  build-engine-core:
+    # Use native runners per platform for reliability (no fragile cross-compilation hacks)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: engine_core-windows-x64
+          - name: linux-x64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: engine_core-linux-x64
+          - name: macos-x64
+            os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: engine_core-macos-x64
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      RUSTFLAGS: "-C debuginfo=1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Show Rust version
+        run: rustc -Vv
+
+      - name: Build engine_core (release)
+        working-directory: engine_core
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare Unity plugin folders
+        run: |
+          UNITY_PLUGINS="UnityProject/Assets/Plugins"
+          mkdir -p "$UNITY_PLUGINS/Windows/x86_64"
+          mkdir -p "$UNITY_PLUGINS/Linux/x86_64"
+          mkdir -p "$UNITY_PLUGINS/macOS"
+
+      - name: Copy engine_core artifact to Unity Plugins
+        run: |
+          UNITY_PLUGINS="UnityProject/Assets/Plugins"
+
+          case "${{ matrix.target }}" in
+            x86_64-pc-windows-msvc)
+              SRC="engine_core/target/${{ matrix.target }}/release/engine_core.dll"
+              DST="$UNITY_PLUGINS/Windows/x86_64/engine_core.dll"
+              ;;
+            x86_64-unknown-linux-gnu)
+              SRC="engine_core/target/${{ matrix.target }}/release/libengine_core.so"
+              DST="$UNITY_PLUGINS/Linux/x86_64/libengine_core.so"
+              ;;
+            x86_64-apple-darwin)
+              SRC="engine_core/target/${{ matrix.target }}/release/libengine_core.dylib"
+              DST="$UNITY_PLUGINS/macOS/libengine_core.dylib"
+              ;;
+            *)
+              echo "Unsupported target: ${{ matrix.target }}"
+              exit 1
+              ;;
+          esac
+
+          if [ ! -f "$SRC" ]; then
+            echo "Expected artifact not found: $SRC"
+            exit 1
+          fi
+
+          cp "$SRC" "$DST"
+          echo "Copied $SRC -> $DST"
+
+      - name: Verify Unity plugin artifacts
+        run: |
+          UNITY_PLUGINS="UnityProject/Assets/Plugins"
+
+          case "${{ matrix.target }}" in
+            x86_64-pc-windows-msvc)
+              test -f "$UNITY_PLUGINS/Windows/x86_64/engine_core.dll"
+              ;;
+            x86_64-unknown-linux-gnu)
+              test -f "$UNITY_PLUGINS/Linux/x86_64/libengine_core.so"
+              ;;
+            x86_64-apple-darwin)
+              test -f "$UNITY_PLUGINS/macOS/libengine_core.dylib"
+              ;;
+          esac
+
+          echo "Verified Unity plugin artifact for target ${{ matrix.target }}"
+
+      - name: Upload engine_core Unity plugins as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            UnityProject/Assets/Plugins/Windows/x86_64/engine_core.dll
+            UnityProject/Assets/Plugins/Linux/x86_64/libengine_core.so
+            UnityProject/Assets/Plugins/macOS/libengine_core.dylib
+          if-no-files-found: error
+
+  # Optional: aggregate job that depends on all builds succeeding
+  summary:
+    needs: [build-engine-core]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "All engine_core native plugins built and mapped into Unity project successfully."
