@@ -1,0 +1,39 @@
+// file: manifests/devices/deathengine_device_DEV-BCI-X1.aln
+manifest deathengine.device.DEV-BCI-X1:
+
+    device:
+        id     = "DEV-BCI-X1";
+        type   = "BCI_EEG";
+        vendor = "ExampleNeuroCorp";
+
+        firmware:
+            version          = "1.3.2";
+            update_channel   = "signed_secure";
+            measured_boot    = true;
+            rollback_protect = true;
+
+        security:
+            isolation         = "TEE_or_secure_enclave";
+            api_surface       = ["metrics_export","stimulus_profile","session_control"];
+            raw_signal_export = false;
+
+    api_contract:
+        allow:
+            - "set_stimulus_profile(level:enum[neutral,low,medium,high])"
+            - "start_session()"
+            - "stop_session(reason:string)"
+            - "export_metrics_summary(window_sec:int)"
+        deny:
+            - "write_firmware()"
+            - "flash_firmware()"
+            - "disable_safety_checks()"
+            - "unlock_bootloader()"
+            - "access_raw_eeg_stream()";
+
+    compliance:
+        region             = ["US","EU"];
+        safety_standards   = ["IEC_60601","IEC_62304"];
+        ai_risk_frameworks = ["NIST_AI_RMF_1.0"];
+        privacy_frameworks = ["NIST_Privacy_Framework","GDPR_like"];
+
+end;
