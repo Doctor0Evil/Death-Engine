@@ -1,0 +1,58 @@
+// file: policies/deathengine_bci_session_governor.aln
+policy deathengine.bci.session_governor:
+
+    // Preconditions: adult user, trusted BCI device
+    require device.type           = "BCI_EEG";
+    require device.firmware.trust = "verified";
+    require driver.sandboxed      = true;
+    require user.age_verified     = true;
+    require user.age_years        >= 18;
+
+    // Sanitized EEG & vitals (device SDK–derived, not raw EEG)
+    require metrics.eeg.alpha_band_power  is number;
+    require metrics.eeg.beta_band_power   is number;
+    require metrics.eeg.gamma_band_power  is number;
+    require metrics.hr.bpm                is number;
+    require metrics.hr.hrv                is number;
+    require metrics.session.duration_sec  is number;
+    require metrics.session.horror_score  in [0..100];
+
+    // Per‑user/per‑device risk profile (calibrated by vendor/clinic)
+    require profile.risk_bandpower_alpha_max   > 0.0;
+    require profile.risk_bandpower_beta_max    > 0.0;
+    require profile.risk_hr_bpm_max            > 0;
+    require profile.risk_hrv_min               > 0;
+    require profile.risk_horror_score_max_soft < profile.risk_horror_score_max_hard;
+
+    let risk_index =
+        normalize(metrics.eeg.alpha_band_power, 0.0, profile.risk_bandpower_alpha_max)     * 0.25 +
+        normalize(metrics.eeg.beta_band_power,  0.0, profile.risk_bandpower_beta_max)      * 0.25 +
+        normalize(metrics.hr.bpm,               60.0, profile.risk_hr_bpm_max)              * 0.25 +
+        normalize(metrics.session.horror_score, 0.0, profile.risk_horror_score_max_hard)   * 0.25;
+
+    alert soft_brake if
+        risk_index >= 0.70 or
+        metrics.session.horror_score > profile.risk_horror_score_max_soft;
+
+    alert hard_brake if
+        risk_index >= 0.90 or
+        metrics.hr.bpm > profile.risk_hr_bpm_max or
+        metrics.hr.hrv < profile.risk_hrv_min;
+
+    // Engine‑side actions via documented SDK calls only
+    deescalate content.level to "medium" if soft_brake = true;
+    override  content.level to "neutral" if hard_brake = true;
+
+    lockdown deathengine.output_stream if hard_brake = true;
+
+    log.audit deathengine.session_event:
+        timestamp        = now();
+        device_id        = device.id;
+        user_hash        = user.pseudonymous_id;
+        risk_index       = risk_index;
+        soft_brake_fired = soft_brake;
+        hard_brake_fired = hard_brake;
+        metrics_snapshot = redact(metrics);
+    end;
+
+end;
