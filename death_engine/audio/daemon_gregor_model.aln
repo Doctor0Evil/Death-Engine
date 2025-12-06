@@ -1,0 +1,280 @@
+// filename: death_engine/audio/daemon_gregor_model.aln
+
+// ==========================================================
+// GREGOR : Guided Reactive Ethereal Gatekeeper of Oscillating Realms
+// ==========================================================
+// Purpose : Core daemon for Death-Audio horror immersion & neuro-fear therapy
+// Layer   : Audio-Orchestration / Neuro-Safety / Compliance-Envelope
+// Author  : Death-Engine R&D / ALN Division
+// License : Open Creative Horror License (OCHL-3.1)
+// ==========================================================
+
+agent GREGOR : DeathOrchestrator {
+
+    // ------------------------------
+    // GLOBAL REGISTERS & CONSTANTS
+    // ------------------------------
+    const TERROR_HARD_MAX        = 92;      // hard ceiling for terror_index
+    const SANITY_HARD_MIN        = 18;      // minimum allowed sanity_score
+    const SAMPLE_WINDOW_MS       = 250;     // EEG sample window size
+    const SAFETY_POLL_MS         = 2000;
+    const BLACKOUT_MAX_DURATION  = 3500ms;  // visual blackout limit
+    const AUDIT_CHANNEL          = "death_audio_audit";
+
+    state {
+        currentProfileId      : string;
+        currentMode           : string = "entertainment"; // entertainment | rehabilitation | research
+        lastFearMetrics       : dict   = {};
+        blackoutActive        : bool   = false;
+        complianceLock        : bool   = false;
+        reaperVoiceProfile    : string = "ReaperHybridV1";
+    }
+
+    // ------------------------------
+    // INITIALIZATION
+    // ------------------------------
+    setup :: {
+        // bind EEG/BCI hardware & audio stack
+        BCI.eeg.bind(readChannels(), SAMPLE_WINDOW_MS);
+        Audio.bus.bind("DEATH_AUDIO_MAIN");
+        Visual.bus.bind("DEATH_VISUAL_OVERLAY");
+
+        load(Audio.libraries.horror_synthesis);
+        load(Audio.libraries.psychoacoustic_fear);
+        load(Visual.libraries.blackout_filters);
+
+        engage(ALN.secure_compliance_mode(level="federal"));
+        complianceLock = true;
+
+        Voice.registerProfile("ReaperHybridV1", {
+            tone        : morph("seraphim", "abyssal"),
+            modulation  : randomize(between(33Hz, 440Hz)),
+            linguistics : "archaic_haunting",
+            formantWarp : "inhuman_drift"
+        });
+
+        log(AUDIT_CHANNEL, "GREGOR initialized — ethereal gatekeeper online.");
+    }
+
+    // ------------------------------
+    // FEAR TAXONOMY & METRICS
+    // ------------------------------
+    function assess_fear(profile userEEG) -> dict {
+        val alpha = userEEG.band("α");
+        val beta  = userEEG.band("β");
+        val theta = userEEG.band("θ");
+        val gamma = userEEG.band("γ");
+        val delta = userEEG.band("δ");
+
+        // Base arousal & instability
+        baseArousal   = normalize(beta + gamma,   min=0.0, max=100.0);
+        dreamTension  = normalize(theta + delta,  min=0.0, max=100.0);
+        corticalQuiet = normalize(alpha,          min=0.0, max=100.0);
+
+        terrorIndex   = clamp(((dreamTension + corticalQuiet) / (baseArousal + 1)) * 100, 0, 100);
+        shockIndex    = clamp((baseArousal * 0.8) + (gamma * 0.2), 0, 100);
+        dreadIndex    = clamp((theta * 0.6) + (delta * 0.4), 0, 100);
+
+        // Derived channels for horror subtypes
+        goreSuscept   = clamp((shockIndex * 0.7) + (terrorIndex * 0.3), 0, 100);
+        spiritualOpen = clamp((delta * 0.5) + (alpha * 0.5), 0, 100);
+
+        sanityScore   = clamp(100 - terrorIndex, 0, 100);
+
+        metrics = {
+            "terror_index"    : terrorIndex,
+            "shock_index"     : shockIndex,
+            "dread_index"     : dreadIndex,
+            "gore_suscept"    : goreSuscept,
+            "spiritual_open"  : spiritualOpen,
+            "sanity_score"    : sanityScore
+        };
+
+        global.write("sanity_score", sanityScore);
+        lastFearMetrics = metrics;
+
+        log(AUDIT_CHANNEL, "fear_metrics", metrics);
+        return metrics;
+    }
+
+    // ------------------------------
+    // HORROR INTENT PROFILE
+    // ------------------------------
+    function apply_intent(profileId : string, metrics : dict, soundscape) {
+        currentProfileId = profileId;
+
+        match profileId {
+            case "near_death_descent":
+                if metrics.terror_index < 60 {
+                    soundscape.inject("heartbeat_distorted", density="medium");
+                    soundscape.shift("room_tone", intensity="+", filter="bandpass_1kHz");
+                } elif metrics.terror_index < TERROR_HARD_MAX {
+                    soundscape.inject("lung_rattle", density="dense");
+                    soundscape.shift("whispers", intensity="++", reverb="cathedral");
+                }
+            case "surgical_gore":
+                if metrics.gore_suscept < 70 {
+                    soundscape.inject("metal_clink_far", density="sparse");
+                } else {
+                    soundscape.inject("wet_surgery Foley", density="dense", pan="random");
+                }
+            case "spiritual_judgement":
+                if metrics.spiritual_open > 55 {
+                    soundscape.shift("choir_fallen", intensity="++", pitch="-2");
+                    soundscape.inject("reverse_bells", density="medium");
+                } else {
+                    soundscape.fade("choir_fallen", delay=2s);
+                }
+            default:
+                soundscape.inject("ominous_static", density="low");
+        }
+    }
+
+    // ------------------------------
+    // CORE DEATH-AUDIO CYCLE
+    // ------------------------------
+    function death_audio_cycle(userState, soundscape) {
+        fearMetrics = assess_fear(userState.EEG);
+
+        // hard safety clamp
+        if fearMetrics.terror_index > TERROR_HARD_MAX {
+            fearMetrics.terror_index = TERROR_HARD_MAX;
+        }
+
+        // baseline ambience by terror band
+        if fearMetrics.terror_index > 85 {
+            soundscape.shift("whispers", intensity="++", reverb="cathedral");
+            Audio.playPattern("Heart_Stopper");
+            schedule_blackout(maxDuration=BLACKOUT_MAX_DURATION);
+        } elif fearMetrics.terror_index > 65 {
+            soundscape.inject("low_frequency_drones", density="dense");
+            Audio.playPattern("PulseFracture");
+        } elif fearMetrics.terror_index > 40 {
+            soundscape.inject("subtle_breaths", density="medium");
+        } else {
+            soundscape.fade("ominous_static", delay=3s);
+        }
+
+        // profile-based augmentation
+        apply_intent(userState.horrorProfile, fearMetrics, soundscape);
+
+        // cognitive/emotional events
+        if userState.detect_event("regret") {
+            narrator.useVoice(reaperVoiceProfile);
+            narrator.say("You walked into the silence knowing what waited beyond.", style="low_whisper");
+        }
+
+        if userState.detect_event("defiance") && fearMetrics.dread_index > 50 {
+            narrator.useVoice(reaperVoiceProfile);
+            narrator.say("Defiance is a candle in a void that does not remember light.", style="echoing");
+        }
+
+        push_to_log(fearMetrics);
+    }
+
+    // ------------------------------
+    // VISUAL BLACKOUT CONTROLS
+    // ------------------------------
+    function schedule_blackout(maxDuration) {
+        if blackoutActive == true {
+            return;
+        }
+        blackoutActive = true;
+
+        Visual.bus.apply("DEATH_VISUAL_OVERLAY", {
+            effect    : "progressive_blackout",
+            duration  : clamp(maxDuration, 0ms, BLACKOUT_MAX_DURATION),
+            vignette  : "blood_tunnel",
+            fpsFloor  : 24
+        });
+
+        timer.after(maxDuration) {
+            Visual.bus.clear("DEATH_VISUAL_OVERLAY");
+            blackoutActive = false;
+        };
+
+        log(AUDIT_CHANNEL, "blackout_triggered", { "duration_ms" : maxDuration });
+    }
+
+    // ------------------------------
+    // SAFETY / SANITY WATCHDOG
+    // ------------------------------
+    watchdog "SafetyThresholder" {
+        loop every(SAFETY_POLL_MS) {
+            val sanity = global.read("sanity_score");
+
+            if sanity == null {
+                continue;
+            }
+
+            if sanity < SANITY_HARD_MIN {
+                Audio.overrideScene("CalmEcho_Protocol");
+                Visual.bus.apply("DEATH_VISUAL_OVERLAY", {
+                    effect   : "soft_fade_in",
+                    palette  : "cool_blues",
+                    duration : 2500ms
+                });
+
+                narrator.useVoice("ReaperHybridV1");
+                narrator.say("The gate closes. Breath returns. You do not cross tonight.", style="gentle_low");
+
+                log(AUDIT_CHANNEL, "safety_brake_triggered", { "sanity_score" : sanity });
+                break;
+            }
+        }
+    }
+
+    // ------------------------------
+    // MODE SWITCHING (ENT / REHAB)
+    // ------------------------------
+    extMode("rehabilitation") {
+        if complianceLock == false {
+            engage(ALN.secure_compliance_mode(level="federal"));
+            complianceLock = true;
+        }
+
+        currentMode = "rehabilitation";
+
+        Audio.mapPhrases({
+            "horror"  : "harm",
+            "death"   : "relapse",
+            "despair" : "loss",
+            "void"    : "emptiness",
+            "damnation" : "consequence"
+        });
+
+        Audio.addCue(Audio.calm_fade("neural_reset.wav", curve="log_smooth"));
+        enable_neurofeedback_coaching({
+            rewardTone   : "distant_sunrise_chime",
+            thresholdKey : "sanity_score",
+            minScore     : 45
+        });
+
+        log(AUDIT_CHANNEL, "mode_switch", { "mode" : currentMode });
+    }
+
+    extMode("entertainment") {
+        currentMode = "entertainment";
+        disable_neurofeedback_coaching();
+        Audio.restoreDefaultPhraseMap();
+        log(AUDIT_CHANNEL, "mode_switch", { "mode" : currentMode });
+    }
+
+    // ------------------------------
+    // PUBLIC CONTROL API
+    // ------------------------------
+    rpc setHorrorProfile(profileId : string) {
+        currentProfileId = profileId;
+        log(AUDIT_CHANNEL, "profile_set", { "profile" : profileId });
+    }
+
+    rpc getFearSnapshot() -> dict {
+        return lastFearMetrics;
+    }
+
+    rpc forceCalmProtocol(reason : string) {
+        Audio.overrideScene("CalmEcho_Protocol");
+        Visual.bus.clear("DEATH_VISUAL_OVERLAY");
+        log(AUDIT_CHANNEL, "force_calm", { "reason" : reason });
+    }
+}
