@@ -1,0 +1,337 @@
+// ==========================================================
+// SOUND-FLESH : Neuro-Safe Horror Audio Primitive Library
+// ==========================================================
+// Purpose : Define reusable whisper, scream, and drone primitives
+//           tagged with GREGOR risk bands and safe frequency ranges.
+// Layer   : Audio-Synthesis / Safety-Envelope / Horror-Orchestration
+// Author  : Death-Engine R&D / ALN Division
+// License : Open Creative Horror License (OCHL-3.1)
+// ==========================================================
+
+module SOUND_FLESH {
+
+    import GREGOR;
+    import Audio;
+
+    // ---------------------------------
+    // GLOBAL SAFETY CONSTANTS
+    // ---------------------------------
+    const HUMAN_MIN_HZ              = 20.0;
+    const HUMAN_MAX_HZ              = 20000.0;
+
+    const SAFE_LONG_SESSION_DB      = 70;  // typical “safe” long-exposure guideline
+    const SAFE_PEAK_DB              = 90;  // short transient peaks, strictly time-limited
+
+    const INFRA_LIMIT_HZ            = 20.0;    // do not emit below this
+    const ULTRA_LIMIT_HZ            = 20000.0; // do not emit above this
+
+    const MAX_GAMMA_MOD_HZ          = 40.0; // amplitude-mod carrier at 40 Hz
+
+    // Risk bands tied to GREGOR's terror/sanity
+    enum RiskBand {
+        LOW,
+        MEDIUM,
+        HIGH,
+        CRITICAL
+    }
+
+    function map_terror_to_risk(terror_index : float) -> RiskBand {
+        if terror_index < 0.35 { return LOW; }
+        if terror_index < 0.65 { return MEDIUM; }
+        if terror_index < 0.85 { return HIGH; }
+        return CRITICAL;
+    }
+
+    // Enforce safe frequency range and volume caps
+    function clamp_safe_freq(freq_hz : float) -> float {
+        if freq_hz < HUMAN_MIN_HZ { return HUMAN_MIN_HZ; }
+        if freq_hz > HUMAN_MAX_HZ { return HUMAN_MAX_HZ; }
+        return freq_hz;
+    }
+
+    function clamp_safe_db(level_db : float, risk : RiskBand) -> float {
+        match risk {
+            case LOW      : return min(level_db, SAFE_LONG_SESSION_DB - 10);
+            case MEDIUM   : return min(level_db, SAFE_LONG_SESSION_DB);
+            case HIGH     : return min(level_db, SAFE_PEAK_DB - 5);
+            case CRITICAL : return min(level_db, SAFE_PEAK_DB); // still under harsh industrial levels
+        }
+    }
+
+    // ---------------------------------
+    // WHISPER ENGINE
+    // ---------------------------------
+    struct WhisperSpec {
+        base_freq_hz   : float;
+        noise_color    : string;  // "white", "pink", "brown"
+        stereo_width   : float;   // 0.0–1.0
+        mod_rate_hz    : float;   // tremolo rate
+        band_low_hz    : float;
+        band_high_hz   : float;
+    }
+
+    function whisper_for_state(terror_index : float) -> WhisperSpec {
+        val risk = map_terror_to_risk(terror_index);
+
+        match risk {
+            case LOW:
+                return WhisperSpec{
+                    base_freq_hz : clamp_safe_freq(800.0),
+                    noise_color  : "pink",
+                    stereo_width : 0.25,
+                    mod_rate_hz  : 0.8,
+                    band_low_hz  : clamp_safe_freq(500.0),
+                    band_high_hz : clamp_safe_freq(4000.0)
+                };
+            case MEDIUM:
+                return WhisperSpec{
+                    base_freq_hz : clamp_safe_freq(1200.0),
+                    noise_color  : "pink",
+                    stereo_width : 0.55,
+                    mod_rate_hz  : 1.6,
+                    band_low_hz  : clamp_safe_freq(400.0),
+                    band_high_hz : clamp_safe_freq(6000.0)
+                };
+            case HIGH:
+                return WhisperSpec{
+                    base_freq_hz : clamp_safe_freq(1600.0),
+                    noise_color  : "white",
+                    stereo_width : 0.75,
+                    mod_rate_hz  : 3.2,
+                    band_low_hz  : clamp_safe_freq(300.0),
+                    band_high_hz : clamp_safe_freq(8000.0)
+                };
+            case CRITICAL:
+                return WhisperSpec{
+                    base_freq_hz : clamp_safe_freq(1800.0),
+                    noise_color  : "white",
+                    stereo_width : 1.0,
+                    mod_rate_hz  : 5.0,
+                    band_low_hz  : clamp_safe_freq(250.0),
+                    band_high_hz : clamp_safe_freq(10000.0)
+                };
+        }
+    }
+
+    function play_whispers(userState) {
+        val terror = global.read("terror_index");
+        val spec   = whisper_for_state(terror);
+        val risk   = map_terror_to_risk(terror);
+
+        val loudness = clamp_safe_db(80, risk); // internal target, clamped per risk
+
+        Audio.emit("WHISPER_LAYER", {
+            type          : "breath_noise",
+            base_freq_hz  : spec.base_freq_hz,
+            noise_color   : spec.noise_color,
+            stereo_width  : spec.stereo_width,
+            bandpass_low  : spec.band_low_hz,
+            bandpass_high : spec.band_high_hz,
+            tremolo_hz    : spec.mod_rate_hz,
+            level_db      : loudness
+        });
+    }
+
+    // ---------------------------------
+    // SCREAM SYNTHESIS ENGINE
+    // ---------------------------------
+    struct ScreamSpec {
+        formant1_hz     : float;
+        formant2_hz     : float;
+        formant3_hz     : float;
+        rise_time_ms    : int;
+        decay_time_ms   : int;
+        vibrato_rate_hz : float;
+    }
+
+    function scream_for_state(terror_index : float) -> ScreamSpec {
+        val risk = map_terror_to_risk(terror_index);
+
+        match risk {
+            case LOW:
+                return ScreamSpec{
+                    formant1_hz     : clamp_safe_freq(500.0),
+                    formant2_hz     : clamp_safe_freq(1500.0),
+                    formant3_hz     : clamp_safe_freq(2500.0),
+                    rise_time_ms    : 120,
+                    decay_time_ms   : 600,
+                    vibrato_rate_hz : 4.0
+                };
+            case MEDIUM:
+                return ScreamSpec{
+                    formant1_hz     : clamp_safe_freq(600.0),
+                    formant2_hz     : clamp_safe_freq(2000.0),
+                    formant3_hz     : clamp_safe_freq(3200.0),
+                    rise_time_ms    : 80,
+                    decay_time_ms   : 700,
+                    vibrato_rate_hz : 5.5
+                };
+            case HIGH:
+                return ScreamSpec{
+                    formant1_hz     : clamp_safe_freq(650.0),
+                    formant2_hz     : clamp_safe_freq(2600.0),
+                    formant3_hz     : clamp_safe_freq(3800.0),
+                    rise_time_ms    : 60,
+                    decay_time_ms   : 900,
+                    vibrato_rate_hz : 7.0
+                };
+            case CRITICAL:
+                return ScreamSpec{
+                    formant1_hz     : clamp_safe_freq(700.0),
+                    formant2_hz     : clamp_safe_freq(3000.0),
+                    formant3_hz     : clamp_safe_freq(4500.0),
+                    rise_time_ms    : 40,
+                    decay_time_ms   : 1100,
+                    vibrato_rate_hz : 8.5
+                };
+        }
+    }
+
+    function trigger_scream(userState, tag : string) {
+        val terror   = global.read("terror_index");
+        val spec     = scream_for_state(terror);
+        val risk     = map_terror_to_risk(terror);
+        val level_db = clamp_safe_db(88, risk);
+
+        Audio.emit("SCREAM_LAYER", {
+            type           : "synthetic_scream",
+            formant1_hz    : spec.formant1_hz,
+            formant2_hz    : spec.formant2_hz,
+            formant3_hz    : spec.formant3_hz,
+            rise_time_ms   : spec.rise_time_ms,
+            decay_time_ms  : spec.decay_time_ms,
+            vibrato_hz     : spec.vibrato_rate_hz,
+            level_db       : level_db,
+            event_tag      : tag
+        });
+    }
+
+    // ---------------------------------
+    // SPIRITUAL DRONE FRAMEWORK
+    // ---------------------------------
+    struct DroneSpec {
+        root_freq_hz   : float;
+        fifth_freq_hz  : float;
+        octave_freq_hz : float;
+        gamma_mod_hz   : float;
+        band_low_hz    : float;
+        band_high_hz   : float;
+    }
+
+    function drone_for_spirituality(spiritual_open : float) -> DroneSpec {
+        // Map spiritual openness to darker / lower roots but keep safe
+        val root = clamp_safe_freq(80.0 + (1.0 - spiritual_open) * 40.0);
+        val fifth  = clamp_safe_freq(root * 1.5);
+        val octave = clamp_safe_freq(root * 2.0);
+
+        return DroneSpec{
+            root_freq_hz   : root,
+            fifth_freq_hz  : fifth,
+            octave_freq_hz : octave,
+            gamma_mod_hz   : MAX_GAMMA_MOD_HZ,
+            band_low_hz    : clamp_safe_freq(60.0),
+            band_high_hz   : clamp_safe_freq(4000.0)
+        };
+    }
+
+    function play_spiritual_drone(userState) {
+        val metrics = GREGOR.getFearSnapshot();
+        val spec    = drone_for_spirituality(metrics.spiritual_open);
+        val risk    = map_terror_to_risk(metrics.terror_index);
+        val level   = clamp_safe_db(65, risk); // drones are long; keep conservative
+
+        Audio.emit("DRONE_LAYER", {
+            type            : "harmonic_drone",
+            root_hz         : spec.root_freq_hz,
+            fifth_hz        : spec.fifth_freq_hz,
+            octave_hz       : spec.octave_freq_hz,
+            band_low_hz     : spec.band_low_hz,
+            band_high_hz    : spec.band_high_hz,
+            gamma_mod_hz    : spec.gamma_mod_hz,
+            gamma_mod_depth : 0.3, // mild 40 Hz amplitude modulation
+            level_db        : level
+        });
+    }
+
+    // ---------------------------------
+    // APPROVED CHANNEL / DEVICE TAGGING
+    // ---------------------------------
+    struct ChannelPolicy {
+        channel_id    : string;
+        max_level_db  : int;
+        allowed_bands : list; // e.g. [ [100, 8000], [500, 12000] ]
+    }
+
+    registry channel_policies : map<string, ChannelPolicy>;
+
+    function register_channel_policy(policy : ChannelPolicy) {
+        channel_policies[policy.channel_id] = policy;
+    }
+
+    function enforce_channel_policy(channel_id : string, freq_hz : float, level_db : float) -> dict {
+        val policy = channel_policies[channel_id];
+
+        if policy == null {
+            // Fallback: global safety only
+            return {
+                "freq_hz"  : clamp_safe_freq(freq_hz),
+                "level_db" : clamp_safe_db(level_db, MEDIUM)
+            };
+        }
+
+        val capped_level = min(level_db, policy.max_level_db);
+
+        // verify band is inside any allowed band
+        var safe_freq = clamp_safe_freq(freq_hz);
+        var allowed   = false;
+        for band in policy.allowed_bands {
+            val low  = band[0];
+            val high = band[1];
+            if safe_freq >= low && safe_freq <= high {
+                allowed = true;
+                break;
+            }
+        }
+
+        if allowed == false {
+            // snap to nearest allowed band center
+            val firstBand = policy.allowed_bands[0];
+            safe_freq = (firstBand[0] + firstBand[1]) / 2.0;
+        }
+
+        return { "freq_hz": safe_freq, "level_db": capped_level };
+    }
+
+    // Example registration for “approved horror headset”
+    function init_default_policies() {
+        register_channel_policy(ChannelPolicy{
+            channel_id    : "BCI_HORROR_HEADSET_V1",
+            max_level_db  : 80,
+            allowed_bands : [
+                [80, 8000],   // broadband horror
+                [400, 4000]   // primary whisper band
+            ]
+        });
+
+        register_channel_policy(ChannelPolicy{
+            channel_id    : "CLINIC_REHAB_SPEAKERS",
+            max_level_db  : 70,
+            allowed_bands : [
+                [200, 6000]
+            ]
+        });
+    }
+
+    // Wrap an emission with policy
+    function emit_secure(channel_id : string, layer : string, params : dict) {
+        val safe = enforce_channel_policy(
+            channel_id,
+            params.base_freq_hz ?? params.root_hz ?? HUMAN_MIN_HZ,
+            params.level_db ?? SAFE_LONG_SESSION_DB
+        );
+        params.level_db   = safe.level_db;
+        params.base_freq_hz = safe.freq_hz;
+
+        Audio.emit(layer, params);
+    }
+}
