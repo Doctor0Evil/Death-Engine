@@ -1,0 +1,75 @@
+{
+  "primitive_id": "string",
+  "name": "string",
+  "category": "whisper | scream | drone | stinger | foley",
+  "risk_band": "LOW | MEDIUM | HIGH | CRITICAL",
+  "gregor_target_metrics": {
+    "terror_index_min": "number (0.0-1.0)",
+    "terror_index_max": "number (0.0-1.0)",
+    "sanity_score_min": "number (0.0-1.0)",
+    "sanity_score_max": "number (0.0-1.0)"
+  },
+  "acoustic_profile": {
+    "freq_min_hz": "number",
+    "freq_max_hz": "number",
+    "dominant_formants_hz": ["number"],
+    "gamma_mod_hz": "number | null",
+    "expected_level_db": "number",
+    "max_level_db": "number"
+  },
+  "exposure_limits": {
+    "max_single_event_ms": "integer",
+    "max_events_per_hour": "integer",
+    "cooldown_ms_after_event": "integer"
+  },
+  "channel_policies": [
+    {
+      "channel_id": "string",
+      "allowed": "boolean",
+      "max_level_db_override": "number | null"
+    }
+  ],
+  "safety_notes": "string",
+  "version": "string",
+  "author": "string"
+},
+{
+  "primitive_id": "whisper_ashen_breath",
+  "name": "Ashen Breath Whisper",
+  "category": "whisper",
+  "risk_band": "MEDIUM",
+  "gregor_target_metrics": {
+    "terror_index_min": 0.35,
+    "terror_index_max": 0.75,
+    "sanity_score_min": 0.25,
+    "sanity_score_max": 1.0
+  },
+  "acoustic_profile": {
+    "freq_min_hz": 400,
+    "freq_max_hz": 6000,
+    "dominant_formants_hz": [1200, 2600],
+    "gamma_mod_hz": null,
+    "expected_level_db": 60,
+    "max_level_db": 70
+  },
+  "exposure_limits": {
+    "max_single_event_ms": 60000,
+    "max_events_per_hour": 30,
+    "cooldown_ms_after_event": 5000
+  },
+  "channel_policies": [
+    {
+      "channel_id": "BCI_HORROR_HEADSET_V1",
+      "allowed": true,
+      "max_level_db_override": 70
+    },
+    {
+      "channel_id": "CLINIC_REHAB_SPEAKERS",
+      "allowed": true,
+      "max_level_db_override": 65
+    }
+  ],
+  "safety_notes": "Ambient whisper bed; no sharp peaks; suitable for extended use within configured limits.",
+  "version": "1.0.0",
+  "author": "Death-Engine R&D"
+}
