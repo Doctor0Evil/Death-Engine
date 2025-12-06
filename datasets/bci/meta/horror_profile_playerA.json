@@ -1,0 +1,47 @@
+{
+  "subject_id": "playerA_horror_001",
+  "hardware": {
+    "device": "generic_32ch_bci",
+    "sampling_rate_hz": 250,
+    "channel_count": 8,
+    "channels": [
+      "F3", "F4", "C3", "C4", "P3", "P4", "O1", "O2"
+    ]
+  },
+  "band_definitions_hz": {
+    "delta": [0.1, 4.0],
+    "theta": [4.0, 8.0],
+    "alpha": [8.0, 12.0],
+    "beta": [13.0, 30.0],
+    "gamma": [30.0, 80.0]
+  },
+  "gregor_tuning": {
+    "terror_threshold_high": 0.78,
+    "terror_threshold_medium": 0.52,
+    "sanity_floor": 0.18,
+    "max_consecutive_jumpscares": 3,
+    "cooldown_ms_after_max_scare": 45000,
+    "preferred_voice_profile": "ReaperHybridV1",
+    "rehab_mode_enabled": false
+  },
+  "emotion_mapping": {
+    "calm_exploration": {
+      "alpha_weight": 0.6,
+      "theta_weight": 0.2,
+      "beta_weight": 0.15,
+      "gamma_weight": 0.05
+    },
+    "terror_spike": {
+      "alpha_weight": 0.05,
+      "theta_weight": 0.15,
+      "beta_weight": 0.45,
+      "gamma_weight": 0.35
+    },
+    "dissociation": {
+      "alpha_weight": 0.1,
+      "theta_weight": 0.6,
+      "beta_weight": 0.2,
+      "gamma_weight": 0.1
+    }
+  }
+}
