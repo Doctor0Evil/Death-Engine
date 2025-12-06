@@ -1,0 +1,62 @@
+module GREGOR_BCI_Pipeline {
+
+    import GREGOR;
+    import CSV;
+    import JSON;
+
+    // Load meta profile and calibrate
+    function load_profile(path_meta) -> dict {
+        val meta = JSON.read(path_meta);
+        GREGOR.config.terror_high  = meta.gregor_tuning.terror_threshold_high;
+        GREGOR.config.terror_med   = meta.gregor_tuning.terror_threshold_medium;
+        GREGOR.config.sanity_floor = meta.gregor_tuning.sanity_floor;
+        GREGOR.voice.setProfile(meta.gregor_tuning.preferred_voice_profile);
+        return meta;
+    }
+
+    // Example: ingest horror session CSV for offline tuning / ML training
+    function load_horror_session(path_csv) -> list {
+        val rows = CSV.read(path_csv, header=true);
+        return rows;
+    }
+
+    // Real-time mapping from raw bands → normalized terror/sanity
+    function compute_indices(delta, theta, alpha, beta, gamma) -> dict {
+        // Normalize by simple energy
+        val total = max(delta + theta + alpha + beta + gamma, 0.001);
+        val n_delta = delta / total;
+        val n_theta = theta / total;
+        val n_alpha = alpha / total;
+        val n_beta  = beta  / total;
+        val n_gamma = gamma / total;
+
+        val terror_index = clamp((n_beta * 0.45) + (n_gamma * 0.40) - (n_alpha * 0.15), 0.0, 1.0);
+        val sanity_score = clamp(1.0 - terror_index, 0.0, 1.0);
+
+        global.write("terror_index", terror_index);
+        global.write("sanity_score", sanity_score);
+
+        return { "terror_index": terror_index, "sanity_score": sanity_score };
+    }
+
+    // Hook called every EEG frame in live gameplay
+    event onEEGFrame(frame) {
+        val idx = compute_indices(
+            frame.delta_uV,
+            frame.theta_uV,
+            frame.alpha_uV,
+            frame.beta_uV,
+            frame.gamma_uV
+        );
+        GREGOR.death_audio_cycle(frame, Audio.currentSoundscape());
+    }
+
+    // Developer customization: override emotional weights from JSON profile
+    function apply_emotion_map(meta, stateName) {
+        val mapping = meta.emotion_mapping[stateName];
+        GREGOR.weights.alpha = mapping.alpha_weight;
+        GREGOR.weights.theta = mapping.theta_weight;
+        GREGOR.weights.beta  = mapping.beta_weight;
+        GREGOR.weights.gamma = mapping.gamma_weight;
+    }
+}
