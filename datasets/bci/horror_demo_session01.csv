@@ -1,0 +1,10 @@
+timestamp_ms,delta_uV,theta_uV,alpha_uV,beta_uV,gamma_uV,heart_bpm,event_tag,terror_label,sanity_label
+0,42.1,31.5,18.3,9.4,2.1,76,BASELINE_IDLE,low,stable
+200,40.3,29.7,19.1,10.2,2.4,78,BASELINE_IDLE,low,stable
+400,38.9,28.8,18.7,11.5,3.0,81,EXPLORING_CORRIDOR,low,stable
+600,36.7,30.2,16.9,14.6,4.7,86,FOOTSTEP_SOUND_MID,medium,stable
+800,35.5,33.0,14.1,18.9,7.2,93,JUMPSCARE_VISUAL_HIGH,high,fragile
+1000,37.2,32.6,13.8,20.4,8.1,101,AFTER_JUMPSCARE,high,fragile
+1200,41.0,29.9,15.2,16.8,5.6,96,WHISPER_VOICES_LOW,medium,unstable
+1400,44.3,27.4,17.8,13.2,3.9,90,RECOVERY_WINDOW,medium,recovering
+1600,46.7,25.9,20.4,11.1,2.8,84,STABLE_EXPLORATION,low,recovering
