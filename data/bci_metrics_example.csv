@@ -1,0 +1,6 @@
+# file: data/bci_metrics_example.csv
+session_id,device_model,user_age,alpha_power,beta_power,gamma_power,hr_bpm,hrv,horror_score,duration_sec
+S001,DEV-BCI-X1,28,1.2,1.5,0.9,82,45,40,300
+S002,DEV-BCI-X1,34,2.1,2.5,1.1,96,38,75,420
+S003,DEV-BCI-X1,41,2.4,2.9,1.4,128,25,85,390
+S004,DEV-BCI-X1,39,2.6,3.2,1.6,135,18,92,260
