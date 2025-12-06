@@ -1,0 +1,42 @@
+// file: policies/deathengine_content_horror_gate.aln
+policy deathengine.content.horror_gate:
+
+    require asset.id          is string;
+    require asset.type        in ["audio","visual","scene","procedural_event"];
+    require asset.esrb_tag    in ["M","AO"];
+    require asset.bci_enabled in [true,false];
+
+    require asset.risk.violence         in [0..100];
+    require asset.risk.gore             in [0..100];
+    require asset.risk.psych_intensity  in [0..100];
+    require asset.risk.flash_patterns   in [0..100];
+    require asset.risk.audio_distortion in [0..100];
+
+    alert reject_for_bci if
+        asset.bci_enabled = true and
+        (
+            asset.risk.flash_patterns   > 40 or
+            asset.risk.audio_distortion > 70
+        );
+
+    let horror_score =
+        asset.risk.violence        * 0.30 +
+        asset.risk.gore            * 0.25 +
+        asset.risk.psych_intensity * 0.45;
+
+    classify asset.intensity = "low"    if horror_score < 35;
+    classify asset.intensity = "medium" if horror_score >= 35 and horror_score < 70;
+    classify asset.intensity = "high"   if horror_score >= 70;
+
+    deny deploy_to_bci_stream if reject_for_bci = true;
+    deny deploy_to_any_stream if asset.esrb_tag not in ["M","AO"];
+
+    log.audit deathengine.asset_screen:
+        asset_id     = asset.id;
+        esrb_tag     = asset.esrb_tag;
+        horror_score = horror_score;
+        bci_enabled  = asset.bci_enabled;
+        rejected_bci = reject_for_bci;
+    end;
+
+end;
