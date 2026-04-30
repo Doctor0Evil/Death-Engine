@@ -1,3 +1,12 @@
+![ALN Compliance](https://img.shields.io/badge/ALN%20Compliance-Enforced-brightgreen)
+![BCI Runtime Kernel](https://img.shields.io/badge/BCI%20Runtime-Death--Engine%20Core-blueviolet)
+![Horror.Place Constellation](https://img.shields.io/badge/Horror.Place-Constituency%20Node-purple)
+![Immutable Telemetry](https://img.shields.io/badge/Telemetry-Immutable%20Ledger-orange)
+![Audit Ready](https://img.shields.io/badge/Audit-Continuous%20BCI%20Tracing-yellow)
+![Neurorights Safety](https://img.shields.io/badge/Neurorights-Safety%20Profiles%20Enforced-green)
+![BCI Devices Ready](https://img.shields.io/badge/BCI%20Devices-Adapter%20Friendly-blue)
+![Asset-Backed](https://img.shields.io/badge/Assets-Constellation%20Anchored-lightgrey)
+
 # Death‑Engine
 
 Death‑Engine is the runtime BCI and geometry kernel for **Horror.Place**, responsible for turning canonical BCI envelopes, invariants, and safety profiles into concrete visual, audio, and haptic behavior. It sits alongside Constellation‑Contracts and Neural‑Resonance‑Lab and focuses exclusively on **runtime execution**, **FFI‑friendly kernels**, and **platform‑agnostic configuration**.
