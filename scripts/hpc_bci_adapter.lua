@@ -1,110 +1,93 @@
--- scripts/hpc_bci_adapter.lua
---
--- Public API for BCI → entertainment metrics adaptation in Death-Engine.
--- This module orchestrates:
---   - Validation of incoming BCI feature envelopes (already schema-checked upstream).
---   - FFI calls into the Rust library (libhpc_bci_ema).
---   - ContractCard-based clamping using the active policy/region/seed contract context.
---
--- NOTE: This stub defines structure and signatures only; it does not implement
--- any numerical mapping logic. That logic lives in the Rust crate.
+-- target-repo: Death-Engine
+-- file: scripts/hpc_bci_adapter.lua
+-- DO NOT add numerics here; only orchestration and contract cap enforcement.
 
 local hpc_bci_adapter = {}
 
--- FFI binding (via LuaJIT FFI or a similar bridge).
--- In your actual engine, replace this with the correct FFI loader.
-local ffi_ok, ffi = pcall(require, "ffi")
-local rust = nil
+local ffi = require("ffi")
+local json = require("dkjson")
 
-if ffi_ok then
-    ffi.cdef[[
-        // FFI signature for the Rust processing function.
-        // It receives:
-        //   - feature_env_json: UTF-8 JSON string for bci-feature-envelope-v1
-        //   - contract_ctx_json: UTF-8 JSON string capturing the active contract context
-        //   - out_buf: caller-allocated buffer for the metrics envelope JSON
-        //   - out_cap: capacity of out_buf in bytes
-        //
-        // It returns:
-        //   - >= 0: number of bytes written into out_buf (excluding terminating 0)
-        //   - <  0: error code
-        int hpc_bci_process(
-            const char* feature_env_json,
-            const char* contract_ctx_json,
-            char* out_buf,
-            int out_cap
-        );
-    ]]
+ffi.cdef[[
+  int32_t hpc_bci_process(
+    const char* feature_json,
+    const char* contract_json,
+    char* out_metrics_json,
+    size_t out_cap
+  );
+]]
 
-    -- Replace "libhpc_bci_ema" with the actual shared library name per platform.
-    local ok_lib, lib = pcall(ffi.load, "hpc_bci_ema")
-    if ok_lib then
-        rust = lib
-    end
+local ok_lib, lib = pcall(ffi.load, "hpc_bci_ema_smoothing")
+if not ok_lib then
+  error("hpc_bci_adapter: failed to load Rust library 'hpc_bci_ema_smoothing'")
 end
 
---- Serialize a Lua table to JSON.
--- In production, this should delegate to your engine's JSON library.
 local function encode_json(tbl)
-    -- Stub: replace with a proper JSON encoder (e.g., cjson or engine builtin).
-    error("encode_json not implemented in hpc_bci_adapter.lua stub")
+  local encoded, pos, err = json.encode(tbl)
+  if not encoded then
+    error("hpc_bci_adapter: JSON encode failed: " .. tostring(err))
+  end
+  return encoded
 end
 
---- Parse a JSON string into a Lua table.
--- In production, this should delegate to your engine's JSON library.
-local function decode_json(json_str)
-    -- Stub: replace with a proper JSON decoder.
-    error("decode_json not implemented in hpc_bci_adapter.lua stub")
+local function decode_json(str)
+  local decoded, pos, err = json.decode(str)
+  if not decoded then
+    error("hpc_bci_adapter: JSON decode failed: " .. tostring(err))
+  end
+  return decoded
 end
 
---- Apply contract-card enforcement to a metrics envelope.
--- This function is responsible for clamping or rejecting metrics updates
--- that fall outside the active policy/region/seed contract ranges.
---
--- @param metrics_env Lua table representing bci-metrics-envelope-v1.
--- @param contract_ctx Lua table capturing policyEnvelope, regionContractCard, seedContractCard.
--- @return Lua table representing the clamped metrics envelope.
 local function enforce_contract_caps(metrics_env, contract_ctx)
-    -- Stub: no-op pass-through for now.
-    -- In future work, implement:
-    --   - Look up allowed bands for UEC, EMD, STCI, CDL, ARR from contract_ctx.
-    --   - Clamp metrics_env values into those bands.
-    --   - Optionally mark metrics_env with flags if clamping occurred.
+  if not MetricsState or not MetricsState.clamp_to_contract then
     return metrics_env
+  end
+  return MetricsState.clamp_to_contract(metrics_env, contract_ctx)
 end
 
---- Public API: process a BCI feature envelope under a given contract context.
---
--- @param feature_env Lua table representing a validated bci-feature-envelope-v1.
--- @param contract_ctx Lua table with the active policyEnvelope / regionContractCard / seedContractCard.
--- @return Lua table representing a validated, contract-clamped bci-metrics-envelope-v1.
+--- Process a single feature envelope through the Rust kernel and apply contract caps.
+-- @param feature_env Lua table matching bci-feature-envelope-v1 (already schema-validated upstream).
+-- @param contract_ctx Lua table containing policyEnvelope, regionContractCard, seedContractCard.
+-- @return Lua table matching bci-metrics-envelope-v1, or nil on error (caller must handle fallback).
 function hpc_bci_adapter.process_feature_envelope(feature_env, contract_ctx)
-    if not rust then
-        error("hpc_bci_adapter: Rust library libhpc_bci_ema not loaded")
+  if not feature_env or type(feature_env) ~= "table" then
+    error("hpc_bci_adapter.process_feature_envelope: feature_env must be a table")
+  end
+  if not contract_ctx or type(contract_ctx) ~= "table" then
+    error("hpc_bci_adapter.process_feature_envelope: contract_ctx must be a table")
+  end
+
+  local feature_json = encode_json(feature_env)
+  local contract_json = encode_json(contract_ctx)
+
+  local out_cap = 65536
+  local out_buf = ffi.new("char[?]", out_cap)
+
+  local ret = lib.hpc_bci_process(
+    feature_json,
+    contract_json,
+    out_buf,
+    out_cap
+  )
+
+  if ret ~= 0 then
+    if H and H.Log and H.Log.error then
+      H.Log.error("BCI processing failed in hpc_bci_process; code=" .. tostring(ret))
     end
+    return nil
+  end
 
-    -- Encode inputs to JSON for the Rust FFI.
-    local feature_json = encode_json(feature_env)
-    local contract_json = encode_json(contract_ctx)
+  local metrics_json = ffi.string(out_buf)
+  local metrics_env = decode_json(metrics_json)
 
-    local feature_c = ffi.new("const char[?]", #feature_json + 1, feature_json)
-    local contract_c = ffi.new("const char[?]", #contract_json + 1, contract_json)
-
-    local out_cap = 16384  -- adjust as needed
-    local out_buf = ffi.new("char[?]", out_cap)
-
-    local written = rust.hpc_bci_process(feature_c, contract_c, out_buf, out_cap)
-    if written < 0 then
-        error("hpc_bci_adapter: hpc_bci_process returned error code " .. tostring(written))
+  if H and H.Config and H.Config.debug and H.Schema and H.Schema.validate then
+    local valid, err = H.Schema.validate(metrics_env, "bci-metrics-envelope-v1")
+    if not valid and H.Log and H.Log.warn then
+      H.Log.warn("BCI metrics envelope schema violation: " .. tostring(err))
     end
+  end
 
-    local metrics_json = ffi.string(out_buf, written)
-    local metrics_env = decode_json(metrics_json)
-
-    -- Apply contract-card enforcement in Lua (in addition to Rust-side caps).
-    local clamped_metrics = enforce_contract_caps(metrics_env, contract_ctx)
-
-    return clamped_metrics
+  local clamped_metrics = enforce_contract_caps(metrics_env, contract_ctx)
+  return clamped_metrics
 end
 
 return hpc_bci_adapter
