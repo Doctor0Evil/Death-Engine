@@ -1,0 +1,94 @@
+# target-repo: Death-Engine
+# file: .github/workflows/bci-schema-validation.yml
+
+name: BCI Schema Validation
+
+on:
+  push:
+    paths:
+      - 'schemas/**'
+      - 'examples/**.json'
+      - 'crates/**/src/**/*.rs'
+  pull_request:
+    paths:
+      - 'schemas/**'
+      - 'examples/**.json'
+      - 'crates/**/src/**/*.rs'
+
+jobs:
+  validate-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      
+      - name: Build schema validator
+        run: cargo build --release -p bci_schema_validator
+        working-directory: tools/bci_schema_validator
+      
+      - name: Validate envelope schemas
+        run: |
+          for schema in ../HorrorPlace-Constellation-Contracts/schemas/telemetry/*.json; do
+            echo "Validating schema: $schema"
+            cargo run --release -- \
+              --schema "$schema" \
+              --input examples/bci-features-sample.ndjson \
+              --fail-fast
+          done
+        working-directory: tools/bci_schema_validator
+      
+      - name: Validate geometry bindings
+        run: |
+          cargo run --release -- \
+            --schema ../HorrorPlace-Constellation-Contracts/schemas/bci/bci-geometry-binding-v1.json \
+            --input ../HorrorPlace-Neural-Resonance-Lab/examples/bci-geometry-bindings.lab.sample.json \
+            --fail-fast
+        working-directory: tools/bci_schema_validator
+      
+      - name: Validate prism outputs
+        run: |
+          for prism in pacing visual haptics; do
+            cargo run --release -- \
+              --schema ../HorrorPlace-Constellation-Contracts/schemas/prism/${prism}-prism-v1.json \
+              --input examples/prism-outputs-sample.ndjson \
+              --fail-fast
+          done
+        working-directory: tools/bci_schema_validator
+      
+      - name: Check binding ID uniqueness
+        run: |
+          # Ensure no duplicate bindingId values in sample collection
+          jq -r '.[].bindingId' ../HorrorPlace-Neural-Resonance-Lab/examples/bci-geometry-bindings.lab.sample.json | \
+            sort | uniq -d | \
+            if grep -q .; then
+              echo "ERROR: Duplicate bindingId values found:"
+              jq -r '.[].bindingId' ../HorrorPlace-Neural-Resonance-Lab/examples/bci-geometry-bindings.lab.sample.json | sort | uniq -d
+              exit 1
+            else
+              echo "OK: All bindingId values are unique"
+            fi
+      
+      - name: Range enforcement checks
+        run: |
+          # Verify all metric bands in sample data are in [0,1]
+          jq -r '.metrics | .uecBand, .emdBand, .stciBand, .cdlBand, .arrBand' \
+            examples/bci-metrics-sample.ndjson | \
+            while read val; do
+              if (( $(echo "$val < 0 || $val > 1" | bc -l) )); then
+                echo "ERROR: Metric band out of range [0,1]: $val"
+                exit 1
+              fi
+            done
+          
+          # Verify DET estimates in [0,10]
+          jq -r '.safety.detEstimate // empty' examples/bci-metrics-sample.ndjson | \
+            while read val; do
+              if (( $(echo "$val < 0 || $val > 10" | bc -l) )); then
+                echo "ERROR: detEstimate out of range [0,10]: $val"
+                exit 1
+              fi
+            done
