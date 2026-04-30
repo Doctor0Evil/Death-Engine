@@ -1,0 +1,10 @@
+Category,Object,Target Repo,File Path,Status,Notes
+Schema,bci-feature-envelope-v1,HorrorPlace-Constellation-Contracts,schemas/telemetry/bci-feature-envelope-v1.json,Drafted,Needs oneOf refinement for feature shapes
+Schema,bci-mapping-request-v1,HorrorPlace-Constellation-Contracts,schemas/bci/bci-mapping-request-v1.json,Missing,Unified kernel input schema
+Schema,bci-mapping-response-v1,HorrorPlace-Constellation-Contracts,schemas/bci/bci-mapping-response-v1.json,Missing,Unified kernel output schema
+Rust,BciMappingRequest struct,HorrorPlace-Neural-Resonance-Lab,crates/bci_kernel/src/api.rs,Missing,Mirror of bci-mapping-request-v1
+Rust,BciMappingResponse struct,HorrorPlace-Neural-Resonance-Lab,crates/bci_kernel/src/api.rs,Missing,Mirror of bci-mapping-response-v1
+Rust,evaluate_mapping,HorrorPlace-Neural-Resonance-Lab,crates/bci_kernel/src/mapping.rs,Planned,Core unified kernel entrypoint
+FFI,hpnrl_bci_evaluate_mapping,Death-Engine,crates/bci_ffi/src/ffi.rs,Missing,JSON-in/JSON-out mapping FFI
+Lua,BciGeometry.sample,Death-Engine,scripts/bci/geometry.lua,Conceptual,"Assemble request, call FFI, route outputs"
+Docs,monster-mode-authoring-v1,Death-Engine,docs/ai-chat-integration/monster-mode-authoring-v1.md,Drafted,Monster-mode style catalog for AI-chat
