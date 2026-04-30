@@ -3,8 +3,8 @@
 -- Summary-driven horror geometry binding:
 --  - Resolves bci-geometry-binding-v1 objects against BciSummary + invariants + metrics.
 --  - Maintains a per-player binding cache keyed by (regionId,tileId).
---  - Exposes BciGeometry.sample(...) as the canonical entrypoint.
---  - Exposes BciGeometry.peekBinding(...) for debug overlays.
+--  - Exposes Geometry.sample(...) as the canonical entrypoint.
+--  - Exposes Geometry.peekBinding(...) for debug overlays.
 --  - All mapping math stays in Rust; Lua only selects bindings and marshals data.
 
 local ok_ffi, ffi = pcall(require, "ffi")
@@ -364,7 +364,9 @@ local function score_binding(binding, summary)
     end
 
     if binding.bciFilter and summary.stressScore then
-        local mid = ((binding.bciFilter.stressScoreMin or 0.0) + (binding.bciFilter.stressScoreMax or 1.0)) * 0.5
+        local min_v = binding.bciFilter.stressScoreMin or 0.0
+        local max_v = binding.bciFilter.stressScoreMax or 1.0
+        local mid = (min_v + max_v) * 0.5
         local d = math.abs(summary.stressScore - mid)
         local bonus = math.max(0.0, 1.0 - d)
         score = score + bonus
@@ -453,7 +455,7 @@ local function call_rust_mapping_kernel(request_tbl)
 end
 
 ----------------------------------------------------------------------
--- Public API: BciGeometry.sample and peekBinding
+-- Public API: Geometry.sample and Geometry.peekBinding
 ----------------------------------------------------------------------
 
 function Geometry.sample(player_id, region_id, tile_id)
